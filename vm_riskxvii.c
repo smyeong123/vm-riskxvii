@@ -6,13 +6,8 @@
 #define INST_MEM_SIZE 1024
 #define DATA_MEM_SIZE 1024
 
+// build command: gcc -g -lm -std=c11 -Wall -Werror -fsanitize=address,leak vm_riskxvii.c -o vm_riskxvii.o
 
-/*
-allocated heap bank
-store at data_mem subtract of 0x0400
-if it is out ouf bound
-*/
-//build gcc -g -lm -std=c11 -Wall -Werror -fsanitize=address,leak vm_riskxvii.c -o vm_riskxvii.o
 typedef struct Blob {
     unsigned char inst_mem[INST_MEM_SIZE];
     unsigned char data_mem[DATA_MEM_SIZE];
@@ -84,8 +79,11 @@ void convert_hex_binary(char *instruction) {
         }        
     }
 }
-
-
+/* TODO
+allocated heap bank
+store at data_mem subtract of 0x0400
+if it is out ouf bound
+*/
 //! debug function
 void print_rds() {
     printf("PC = 0x%08lx;\n",(int)(pc - blob.inst_mem) / sizeof(char));
@@ -199,10 +197,10 @@ void handle_memory_access_write(int address_int, int val, int num_bytes) {
         } else if (address_int == 2088) {
             printf("0x%08x", val);
         } else if (address_int == 2096) {
-            //TODO
+            // TODO
             // heap banks
             // make dynamic allocated array for 8192 bytes
-            //check if memory is allocated
+            // check if memory is allocated
             if (val <= 0) {
                 return;
             }
@@ -265,7 +263,7 @@ void handle_memory_access_write(int address_int, int val, int num_bytes) {
                 return;
             }
         } else if (address_int == 2100) {
-            //free
+            // free
             if (val < 46848 || val  > 46848 + (128*64)) {
                 return;
             }
@@ -289,7 +287,7 @@ void handle_memory_access_write(int address_int, int val, int num_bytes) {
             for (int i = start_index; i < 128; i++) {
                 for (int j = start_row; j < 18; j++) {
                     if (occpuied[i][j] == 1) {
-                        //removed
+                        // removed
                         occpuied[i][j] = -1;
                     }
                     num_need_move--;
@@ -297,7 +295,7 @@ void handle_memory_access_write(int address_int, int val, int num_bytes) {
             }
 
         } else if (address_int >= 2128 && address_int <= 2303) {
-            //customized virtual routines
+            // customized virtual routines
         } else {
             illegal_operation();
         }
@@ -305,11 +303,11 @@ void handle_memory_access_write(int address_int, int val, int num_bytes) {
 
 
     } else if (address_int >= 46848 && address_int <= 55039) {
-        //attempting to write in heap banks
-        //ilegal to write
+        // attempting to write in heap banks
+        // ilegal to write
         illegal_operation();
     }else {
-        //invalid address
+        // invalid address
         illegal_operation();
     }
 }
@@ -329,12 +327,12 @@ void parse_R(char *opcode) {
 
     if (strncmp(func3, "000", 3) == 0) {
         if (strncmp(func7, "0000000", 7) == 0) {
-            //add
+            // add
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] + rds[get_int(rs2, 5)];
             }
         } else if (strncmp(func7, "0100000", 7) == 0) {
-            //sub
+            // sub
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] - rds[get_int(rs2, 5)];
             }
@@ -343,33 +341,33 @@ void parse_R(char *opcode) {
             not_implemented();
         }
     } else if (strncmp(func3, "100", 3) == 0 && strncmp(func7, "0000000", 7) == 0) {
-        //xor
+        // xor
         if (get_int(rd, 5) != 0) {
             rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] ^ rds[get_int(rs2, 5)];
         }
     } else if (strncmp(func3, "110", 3) == 0 && strncmp(func7, "0000000", 7) == 0) {
-        //or
+        // or
         if (get_int(rd, 5) != 0) {
             rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] | rds[get_int(rs2, 5)];
         }
     } else if (strncmp(func3, "111", 3) == 0 && strncmp(func7, "0000000", 7) == 0) {
-        //and
+        // and
         if (get_int(rd, 5) != 0) {
             rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] & rds[get_int(rs2, 5)];
         }
     } else if (strncmp(func3, "001", 3) == 0 && strncmp(func7, "0000000", 7) == 0) {
-        //sll
+        // sll
         if (get_int(rd, 5) != 0) {
             rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] << rds[get_int(rs2, 5)];
         }
     } else if (strncmp(func3, "101", 3) == 0) {
         if (strncmp(func7, "0000000", 7) == 0) {
-            //srl
+            // srl
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] >> rds[get_int(rs2, 5)];
             }
         } else if (strncmp(func7, "0100000", 7) == 0) {
-            //sra
+            // sra
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] >> rds[get_int(rs2, 5)];
                 int rms_bit = rds[get_int(rd, 5)] & 0x1;
@@ -383,12 +381,12 @@ void parse_R(char *opcode) {
             not_implemented();
         }
     } else if (strncmp(func3, "010", 3) == 0 && strncmp(func7, "0000000", 7) == 0) {
-        //slt
+        // slt
         if (get_int(rd, 5) != 0) {
             rds[get_int(rd, 5)] = (rds[get_int(rs1, 5)] < rds[get_int(rs2, 5)]) ? 1 : 0;
         }
     } else if (strncmp(func3, "011", 3) == 0 && strncmp(func7, "0000000", 7) == 0) {
-        //sltu
+        // sltu
         if (get_int(rd, 5) != 0) {
             rds[get_int(rd, 5)] = ((unsigned int)rds[get_int(rs1, 5)] < (unsigned int)rds[get_int(rs2, 5)]) ? 1 : 0;
         }
@@ -399,7 +397,7 @@ void parse_R(char *opcode) {
     return;
 }
 void parse_I(char *opcode) {
-    //func3
+    // func3
     char func3[4] = ""; //3bits
     char rd[6] = "";
     char rs1[6] = "";
@@ -411,32 +409,32 @@ void parse_I(char *opcode) {
     // print_imm(imm_bin,12);
     if (strncmp(opcode, "0010011", 7) == 0) {
         if (strncmp(func3, "000", 3) == 0) {
-            //addi
+            // addi
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] + get_signed_int(imm_bin, 12);
             }
         } else if(strncmp(func3, "100", 3) == 0) {
-            //xori
+            // xori
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] ^ get_signed_int(imm_bin, 12);
             }
         } else if(strncmp(func3, "110", 3) == 0) {
-            //ori
+            // ori
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] | get_signed_int(imm_bin, 12);
             }
         } else if(strncmp(func3, "111", 3) == 0) {
-            //andi
+            // andi
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = rds[get_int(rs1, 5)] & get_signed_int(imm_bin, 12);
             }
         } else if(strncmp(func3, "010", 3) == 0) {
-            //slti
+            // slti
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = (rds[get_int(rs1, 5)] < get_signed_int(imm_bin, 13)) ? 1 : 0;
             }
         } else if(strncmp(func3, "011", 3) == 0) {
-            //sltiu
+            // sltiu
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd, 5)] = ((unsigned int)rds[get_int(rs1, 5)] < (unsigned int)get_signed_int(imm_bin, 13)) ? 1 : 0;
             }
@@ -446,23 +444,23 @@ void parse_I(char *opcode) {
         }
     }else if (strncmp(opcode, "0000011", 7) == 0) {
         if (strncmp(func3, "000", 3) == 0) {
-            //lb
+            // lb
             int address_int = rds[get_int(rs1,5)] + get_signed_int(imm_bin, 12);
             handle_memory_access_load(address_int, get_int(rd, 5), 1, 1);
         } else if(strncmp(func3, "001", 3) == 0) {
-            //lh
+            // lh
             int address_int = rds[get_int(rs1,5)] + get_signed_int(imm_bin, 12);
             handle_memory_access_load(address_int, get_int(rd, 5), 2, 1);
         } else if(strncmp(func3, "010", 3) == 0) {
-            //lw
+            // lw
             int address_int = rds[get_int(rs1,5)] + get_int(imm_bin, 12);
             handle_memory_access_load(address_int, get_int(rd, 5), 4, 0);
         } else if(strncmp(func3, "100", 3) == 0) {
-            //lbu
+            // lbu
             int address_int = (unsigned int)rds[get_int(rs1,5)] + (unsigned int)get_signed_int(imm_bin, 12);
             handle_memory_access_load(address_int, get_int(rd, 5), 1, 0);
         } else if(strncmp(func3, "101", 3) == 0) {
-            //lhu
+            // lhu
             int address_int = (unsigned int)rds[get_int(rs1,5)] + (unsigned int)get_signed_int(imm_bin, 12);
             handle_memory_access_load(address_int, get_int(rd, 5), 2, 0);
         } else {
@@ -473,7 +471,7 @@ void parse_I(char *opcode) {
         // opcode is 1100111
         if (strncmp(func3, "000", 3) == 0) {
             //! todo
-            //jalr
+            // jalr
             if (get_int(rd, 5) != 0) {
                 rds[get_int(rd,5)] = (int)(pc+4 - blob.inst_mem) / sizeof(char);
             }
@@ -486,7 +484,7 @@ void parse_I(char *opcode) {
     return;
 }
 void parse_S(char *opcode) {
-    //func3
+    // func3
     char func3[4] = ""; //3bits
     char rs1[6] = "";
     char rs2[6] = "";
@@ -502,18 +500,18 @@ void parse_S(char *opcode) {
     strncpy(rs1, instruction_bin+12, 5);
 
     if (strncmp(func3, "000", 3) == 0) {
-        //sb
+        // sb
         int address_int = rds[get_int(rs1,5)] + get_signed_int(imm_bin, 12);
         int val = rds[get_int(rs2, 5)] & 0xff;
         handle_memory_access_write(address_int, val, 1);
     } else if (strncmp(func3, "001", 3) == 0) {
-        //sh
+        // sh
         int address_int = rds[get_int(rs1,5)] + get_signed_int(imm_bin, 12);
         int val = rds[get_int(rs2, 5)] & 0xffff;
         handle_memory_access_write(address_int, val, 2);
 
     } else if (strncmp(func3, "010", 3) == 0) {
-        //sw
+        // sw
         int address_int = rds[get_int(rs1,5)] + get_signed_int(imm_bin, 12);
         int val = rds[get_int(rs2, 5)];
         handle_memory_access_write(address_int, val, 4);
