@@ -1,17 +1,4 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<stdint.h>
-#include<math.h>
-#define INST_MEM_SIZE 1024
-#define DATA_MEM_SIZE 1024
-
-// build command: gcc -g -lm -std=c11 -Wall -Werror -fsanitize=address,leak vm_riskxvii.c -o vm_riskxvii.o
-
-typedef struct Blob {
-    unsigned char inst_mem[INST_MEM_SIZE];
-    unsigned char data_mem[DATA_MEM_SIZE];
-}Blob;
+# include "vm_riskxvii.h"
 
 Blob blob;
 unsigned int rds[32];
@@ -19,7 +6,6 @@ unsigned char *pc;
 char instruction[9];
 char instruction_bin[33];
 const char EMPTY_BITS[33] = "00000000000000000000000000000000";
-//determine whether heap bank is occupied;
 unsigned int occpuied[128][64];
 
 int get_int(char *bin, int len) {
@@ -35,6 +21,7 @@ int get_int(char *bin, int len) {
     }
     return val;
 }
+
 int get_signed_int(char *bin, int len) {
     int val = 0;
     for(int i = 0; i < len; i++) {
@@ -52,9 +39,11 @@ int get_signed_int(char *bin, int len) {
     }
     return val;
 }
+
 void update_hex_instruction() {
     snprintf(instruction, 9, "%02x%02x%02x%02x", *(pc + 3), *(pc + 2), *(pc + 1), *pc);
 }
+
 void convert_hex_binary(char *instruction) {
     for(int i = 0; i < 8; i++) {
         char c = instruction[i];
@@ -79,11 +68,7 @@ void convert_hex_binary(char *instruction) {
         }        
     }
 }
-/* TODO
-allocated heap bank
-store at data_mem subtract of 0x0400
-if it is out ouf bound
-*/
+
 //! debug function
 void print_rds() {
     printf("PC = 0x%08lx;\n",(int)(pc - blob.inst_mem) / sizeof(char));
@@ -109,6 +94,7 @@ void illegal_operation() {
     print_rds();
     exit(0);
 }
+
 void handle_memory_access_load(int address_int, int dest, int num_bytes, int is_signed) {
     if (address_int>=0 && address_int <= 1024) {
         if (num_bytes == 1) {
@@ -160,6 +146,7 @@ void handle_memory_access_load(int address_int, int dest, int num_bytes, int is_
         illegal_operation();
     }
 }
+
 void handle_memory_access_write(int address_int, int val, int num_bytes) {
     if (address_int>=1024 && address_int <= 2047) {
         //accessing data memory
@@ -197,7 +184,6 @@ void handle_memory_access_write(int address_int, int val, int num_bytes) {
         } else if (address_int == 2088) {
             printf("0x%08x", val);
         } else if (address_int == 2096) {
-            // TODO
             // heap banks
             // make dynamic allocated array for 8192 bytes
             // check if memory is allocated
@@ -592,7 +578,6 @@ void parse_U(char *opcode) {
     }
 }
 void parse_UJ(char *opcode) {
-    //! todo
     //only JAL
     char imm_bin[21];
     char rd[6]; 
@@ -613,7 +598,6 @@ void parse_UJ(char *opcode) {
     
     pc += (int) get_signed_int(imm_bin, 21);
 }
-
 void parse_bin() {
     char opcode[8];
     strncpy(opcode, instruction_bin + 25, 7);
@@ -653,7 +637,7 @@ int main(int argc, char **argv) {
     }
 
     FILE *fptr = fopen(argv[1], "rb");
-    // get the file size
+    //? get the file size
     fseek(fptr, 0, SEEK_END);
     long f_size = ftell(fptr);
     fseek(fptr, 0, SEEK_SET);
@@ -661,7 +645,7 @@ int main(int argc, char **argv) {
         printf("file size is not 2048 bytes.\n");
         return -1;
     }
-    // read whole binary image
+    //! read whole binary image
     size_t num_bytes = fread(blob.inst_mem, 4, 256, fptr);
     if ((int) num_bytes != 256) {
         printf("invalid\n");
@@ -677,19 +661,16 @@ int main(int argc, char **argv) {
         update_hex_instruction();
         convert_hex_binary(instruction);
         if(strncmp(instruction_bin, EMPTY_BITS, sizeof(instruction_bin)) == 0) {
-            //if instruction binary is all 0, break
+            //? if instruction binary is all 0, break
             memset(instruction_bin, 0, sizeof(instruction_bin));
             break;
         }
-        // printf("pc is at %lu:\n", (int)(pc - blob.inst_mem) / sizeof(char));
-        // printf("bin: %s\n",instruction_bin);
         unsigned char *prev_pc = pc;
         parse_bin();
         memset(instruction_bin, 0, sizeof(instruction_bin));
         if (prev_pc == pc) {
             pc += 4;
         }
-        // print_rds();
     }
     fclose(fptr);
     return 0;
