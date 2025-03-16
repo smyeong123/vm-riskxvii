@@ -13,8 +13,5 @@ $(TARGET): $(SRC)
 run:
 	./$(TARGET)
 
-test:
-	echo what are we testing?!
-
 clean:
 	rm -f $(TARGET)
